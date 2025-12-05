@@ -24,7 +24,11 @@ import cv2
 import numpy as np
 import zmq
 
-from lerobot.utils.errors import DeviceAlreadyConnectedError, DeviceNotConnectedError
+# Try importing errors from lerobot 0.4+ first, fallback to 0.3.x
+try:
+    from lerobot.utils.errors import DeviceAlreadyConnectedError, DeviceNotConnectedError
+except ImportError:
+    from lerobot.errors import DeviceAlreadyConnectedError, DeviceNotConnectedError
 
 from ..robot import Robot
 from .config_xlerobot import XLerobotConfig, XLerobotClientConfig

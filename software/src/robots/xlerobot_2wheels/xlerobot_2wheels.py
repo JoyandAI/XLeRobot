@@ -23,7 +23,11 @@ from typing import Any
 import numpy as np
 
 from lerobot.cameras.utils import make_cameras_from_configs
-from lerobot.utils.errors import DeviceAlreadyConnectedError, DeviceNotConnectedError
+# Try importing errors from lerobot 0.4+ first, fallback to 0.3.x
+try:
+    from lerobot.utils.errors import DeviceAlreadyConnectedError, DeviceNotConnectedError
+except ImportError:
+    from lerobot.errors import DeviceAlreadyConnectedError, DeviceNotConnectedError
 from lerobot.motors import Motor, MotorCalibration, MotorNormMode
 from lerobot.motors.feetech import (
     FeetechMotorsBus,

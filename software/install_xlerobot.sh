@@ -12,6 +12,7 @@ cp $XLE_SOFTWARE_DIR/src/model/SO101Robot.py $LEROBOT_DIR/src/lerobot/model/
 
 # 拷贝 xlerobot 到 robots 目录
 cp -r $XLE_SOFTWARE_DIR/src/robots/xlerobot $LEROBOT_DIR/src/lerobot/robots/
+cp -r $XLE_SOFTWARE_DIR/src/robots/xlerobot_2wheels $LEROBOT_DIR/src/lerobot/robots/
 
 # 创建 examples/xlerobot 目录
 mkdir -p $LEROBOT_DIR/examples/xlerobot
