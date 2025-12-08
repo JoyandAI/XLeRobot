@@ -22,7 +22,7 @@ import math
 
 from lerobot.robots.xlerobot_2wheels import XLerobot2WheelsConfig, XLerobot2Wheels
 from lerobot.utils.robot_utils import busy_wait
-from lerobot.utils.visualization_utils import init_rerun, log_rerun_data
+from lerobot.utils.visualization_utils import _init_rerun, log_rerun_data
 from lerobot.model.SO101Robot import SO101Kinematics
 from joyconrobotics import JoyconRobotics
 
@@ -582,7 +582,7 @@ def main():
         print(f"[MAIN] Robot: {robot}")
         return
 
-    init_rerun(session_name="xlerobot_2wheels_teleop_joycon")
+    _init_rerun(session_name="xlerobot_2wheels_teleop_joycon")
 
     # Initialize right Joy-Con controller - based on 6_so100_joycon_ee_control.py
     print("[MAIN] Initializing right Joy-Con controller...")
