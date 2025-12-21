@@ -303,11 +303,16 @@ class XLerobot(Robot):
     def configure(self):
         # Set-up arm actuators (position mode)
         # We assume that at connection time, arm is in a rest position,
-        # and torque can be safely disabled to run calibration        
+        # and torque can be safely disabled to run calibration
+        
+        # bus 1
         self.bus1.disable_torque()
+        self.bus1.configure_motors()
+
+        # bus 2
         self.bus2.disable_torque()
         self.bus2.configure_motors()
-        self.bus2.configure_motors()
+        
         
         for name in self.left_arm_motors:
             self.bus1.write("Operating_Mode", name, OperatingMode.POSITION.value)

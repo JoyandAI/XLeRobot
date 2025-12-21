@@ -8,8 +8,18 @@
 You can also buy [pre-assembled kits](https://github.com/TheRobotStudio/SO-ARM100#kits) for SO101 arms.
 
 ```
+
+Official Assembly Videos from Wowrobo:
 <iframe width="800" height="600" 
     src="https://www.youtube.com/embed/upB1CEFeOlk" 
+    frameborder="0" 
+    allowfullscreen>
+</iframe>
+
+Tips from Greg's Tech
+
+<iframe width="800" height="600" 
+    src="https://www.youtube.com/embed/Ezy3EepLSm4" 
     frameborder="0" 
     allowfullscreen>
 </iframe>

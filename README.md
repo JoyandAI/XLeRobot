@@ -40,9 +40,12 @@
 ---
 
 # 📰 News 
+- 2025-12-02: [Dual-wheel version released](https://github.com/Vector-Wangel/XLeRobot/blob/main/hardware/XLeRobot_0_4_0_extra.stl)! Have a more stable and accurate differential-wheel base for a cheaper price. (Default servo motor, optional scooter brushless Motor available at a similar price)
+  <img width="1368" height="789" alt="image" src="https://github.com/user-attachments/assets/db226bfb-dc20-407b-9854-6a394ccd8fe7" />
+
 - 2025-11-11: **[Temporary VLA tutorial](https://xlerobot.readthedocs.io/en/latest/software/getting_started/RL_VLA.html#vision-language-action-vla-training-for-xlerobot)** out. Official version out soon.
 - 2025-09-22: **Hardware Assembly Video Tutorial** availabe at [Youtube](https://www.youtube.com/watch?v=upB1CEFeOlk) and [Bilibili](https://www.bilibili.com/video/BV1AGWFzUEJf/). Thanks WOWROBO for making this video!
-- 2025-09-09: **Developer Assembly kit (excluding battery and IKEA cart) ready for purchase** in [China (Taobao) for **3699￥**](https://e.tb.cn/h.SZFbBgZABZ8zRPe?tk=ba514rTBRjQ) and [world-wide for **579\$**](https://shop.wowrobo.com/products/xlerobot-dual-arm-mobile-household-robot-kit?variant=47297659961561). _(In collaboration with **Wowrobo**, one of the official collaborators with Huggingface SO101 arm, they have sold 5k+ SO101 arm worldwide with great customer feedback.)_
+- 2025-09-09: **Developer Assembly kit (excluding battery and IKEA cart) ready for purchase** in [China (Taobao) for **3699￥**](https://e.tb.cn/h.SZFbBgZABZ8zRPe?tk=ba514rTBRjQ) and [world-wide for **579\$**](https://shop.wowrobo.com/products/xlerobot-dual-arm-mobile-household-robot-kit?variant=47297659961561). _(In collaboration with **Wowrobo**)_
   <img width="1482" height="485" alt="image" src="https://github.com/user-attachments/assets/788836c1-966a-4d11-a911-5c37befc0b85" />
   - Non-profit, I personally don't earn any from this. I also asked Wowrobo to set the price as low as possible.
   - This is only the assembly kit for developers, please check documentation website and this repo for available codes and tutorials before you purchase.
@@ -54,7 +57,6 @@
 
 
 - 2025-07-30: [Control XLeRobot in real life](https://xlerobot.readthedocs.io/en/latest/software/index.html) with **keyboard/Xbox controller/Switch joycon** in the wild anywhere. All bluetooth, no wifi needed and zero latency.
-- ![rea](https://github.com/user-attachments/assets/de8f50ad-a370-406c-97fb-fc01638d5624)
 
 
 - 2025-07-08: [**Simulation**](https://xlerobot.readthedocs.io/en/latest/simulation/index.html) with updated urdfs, control scripts (support Quest3 VR, keyboard, Xbox controller, switch joycon), support for new hardware and cameras, RL environment. Get started in 15 min.
