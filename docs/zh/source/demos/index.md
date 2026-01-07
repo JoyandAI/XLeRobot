@@ -7,6 +7,25 @@
   Your browser does not support the video tag.
 </video>
 
+### 社区演示
+
+欢迎每个人在这里贡献！您可以通过修改[此文件](https://github.com/Vector-Wangel/XLeRobot/edit/main/docs/en/source/demos/index.md)并在github上提交pull request直接在此处添加您的演示。
+
+#### 来自Astera Institute
+
+<video width="100%" controls>
+  <source src="https://vector-wangel.github.io/XLeRobot-assets/videos/Community/Brain_bot_by_astera.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+
+#### 来自Makermod
+
+<video width="100%" controls>
+  <source src="https://vector-wangel.github.io/XLeRobot-assets/videos/Community/makermod/makermod.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+
+
 ### VR控制
 
 <video width="100%" controls>
@@ -58,7 +77,3 @@
   <source src="https://github.com/user-attachments/assets/98312e30-9a5d-41a1-a6ce-ef163c3abfd5" type="video/mp4">
   Your browser does not support the video tag.
 </video>
-
-### 社区演示
-
-欢迎每个人在这里贡献！您可以通过修改[此文件](https://github.com/Vector-Wangel/XLeRobot/edit/main/docs/en/source/demos/index.md)并在github上提交pull request直接在此处添加您的演示。

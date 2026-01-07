@@ -40,7 +40,7 @@
 ---
 
 # 📰 News 
-- 2025-12-02: [Dual-wheel version released](https://github.com/Vector-Wangel/XLeRobot/blob/main/hardware/XLeRobot_0_4_0_extra.stl)! Have a more stable and accurate differential-wheel base for a cheaper price. (Default servo motor, optional scooter brushless Motor available at a similar price)
+- 2025-12-02: [Dual-wheel version released](https://xlerobot.readthedocs.io/en/latest/hardware/getting_started/assemble_2wheel.html)! Have a more stable and accurate differential-wheel base for a cheaper price. (Default servo motor, optional scooter brushless Motor available at a similar price)
   <img width="1368" height="789" alt="image" src="https://github.com/user-attachments/assets/db226bfb-dc20-407b-9854-6a394ccd8fe7" />
 
 - 2025-11-11: **[Temporary VLA tutorial](https://xlerobot.readthedocs.io/en/latest/software/getting_started/RL_VLA.html#vision-language-action-vla-training-for-xlerobot)** out. Official version out soon.
@@ -103,12 +103,14 @@ Please refer to [CONTRIBUTING.md](CONTRIBUTING.md) for guidance on how to get in
 **Main Contributors**
 
 - [Gaotian/Vector Wang](https://vector-wangel.github.io/)
+- [Jiahao Wang](https://github.com/kahowang), [Chunbo Pan](https://github.com/IIMFINE), [QiLiu](https://github.com/Lakesenberg), [Isaac Sin](https://github.com/IsaacSinn), [Ryan Chan](https://github.com/RapidCAMO): [MakerMods team](https://www.makermods.ai/), VLA and VR integration
 - [Zhuoyi Lu](https://lzhuoyi.github.io/Zhuoyi_Lu.github.io/): RL sim2real deploy, teleop on real robot (Xbox, VR, Joycon)
 - Yiyang Huang: RL & VLA implementation (ongoing)
 - YCP: WebUI for remote control (ongoing)
 - [Lixing Zhang](lixingzhang.com): Hardware design improvements
 - Nicole Yue: Documentation website setup
 - Yuesong Wang: Mujoco simulation
+- 
 
 
 This is just a small brick in the pyramid, made possible by [LeRobot](https://github.com/huggingface/lerobot), [SO-100](https://github.com/TheRobotStudio/SO-ARM100), [Lekiwi](https://github.com/SIGRobotics-UIUC/LeKiwi), and [Bambot](https://github.com/timqian/bambot). Thanks to all the talented contributors behind these detailed and professional projects.

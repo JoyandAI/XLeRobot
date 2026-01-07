@@ -21,6 +21,8 @@
 
 ##### [🔨 Assembly](getting_started/assemble)
 
+##### [🔨 Assembly Dual-wheel](getting_started/assemble_2wheel)
+
 ##### [🛠️ Hardware Intro](hardware_intro/index)
 
 ---
@@ -31,6 +33,7 @@
 getting_started/material
 getting_started/3d
 getting_started/assemble
+getting_started/assemble_2wheel
 ```
 
 ```{toctree}

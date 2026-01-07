@@ -1,25 +1,25 @@
-## LLM Agent Control
+## LLM Agent 控制
 
-Imagine telling the robot "go cleanup my kitchen" and watching it doing so. This tutorial will show you how you can make your XLeRobot fully autonomous, self-decision making machine by providing it with LLM agent. An agent that uses camera vision and voice commands to move the robot and manipulate objects with VLA policies.
+想象一下告诉机器人"去清理我的厨房"并看着它执行。本教程将向您展示如何通过为XLeRobot提供LLM agent，使其成为完全自主、自主决策的机器。该agent使用摄像头视觉和语音命令来移动机器人，并使用VLA策略操作物体。
 
-Demo of agent controlling XLeRobot, that has a task to grab a notebook and give it to human:
+演示agent控制XLeRobot，任务是抓取笔记本并交给人类：
 
 <video width="100%" controls>
   <source src="https://github-production-user-asset-6210df.s3.amazonaws.com/50213363/528949330-faf375cf-d29a-4b1b-b0b1-da474c7006fe.mov?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAVCODYLSA53PQK4ZA%2F20251221%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20251221T111424Z&X-Amz-Expires=300&X-Amz-Signature=3cc0d5a82bf005bb517e77f3fdcd59f906601cb0a8df5158e3e50806067c734a&X-Amz-SignedHeaders=host" type="video/mp4">
   To be uploaded.
 </video>
 
-### Getting Started
+### 开始使用
 
-To create our agent, we will use the [RoboCrew](https://github.com/Grigorij-Dudnik/RoboCrew) library - one specially designed for embodied agents. On your control device (Raspberry Pi or laptop) create a new virtual environment and install it with:
+要创建我们的agent，我们将使用[RoboCrew](https://github.com/Grigorij-Dudnik/RoboCrew)库——一个专门为具身agent设计的库。在您的控制设备（树莓派或笔记本电脑）上创建一个新的虚拟环境并安装它：
 
 ```bash
 pip install robocrew
 ```
 
-Next, create the python script to control your robot. Let's start by creating a simple agent that performs just one hardcoded task and finishes. 
+接下来，创建用于控制机器人的python脚本。让我们从创建一个简单的agent开始，它只执行一个硬编码的任务然后完成。
 
-First, let's initialize camera and create tools for agent to control a wheel movement:
+首先，让我们初始化摄像头并创建用于agent控制轮子移动的工具：
 
 ```python
 from robocrew.core.camera import RobotCamera
@@ -27,25 +27,25 @@ from robocrew.core.LLMAgent import LLMAgent
 from robocrew.robots.XLeRobot.tools import create_move_forward, create_turn_right, create_turn_left
 from robocrew.robots.XLeRobot.servo_controls import ServoControler
 
-# set up main camera
-main_camera = RobotCamera("/dev/camera_center") # camera usb port Eg: /dev/video0
+# 设置主摄像头
+main_camera = RobotCamera("/dev/camera_center") # 摄像头usb端口 例如: /dev/video0
 
-#set up servo controler
-right_arm_wheel_usb = "/dev/arm_right"    # provide your right arm usb port. Eg: /dev/ttyACM1
+#设置舵机控制器
+right_arm_wheel_usb = "/dev/arm_right"    # 提供您的右臂usb端口。例如: /dev/ttyACM1
 servo_controler = ServoControler(right_arm_wheel_usb=right_arm_wheel_usb)
 
-#set up tools
+#设置工具
 move_forward = create_move_forward(servo_controler)
 turn_left = create_turn_left(servo_controler)
 turn_right = create_turn_right(servo_controler)
 ```
 
-in place of `/dev/arm_right` you should provide the USB port name of your right arm (one connected to the wheels).
+您应该提供右臂的USB端口名称（连接到轮子的那个）来替代`/dev/arm_right`。
 
-Next, let's initialize and run an agent itself:
+接下来，让我们初始化并运行agent本身：
 
 ```python
-# init agent
+# 初始化agent
 agent = LLMAgent(
     model="google_genai:gemini-3-flash-preview",
     tools=[
@@ -62,20 +62,20 @@ agent.task = "Approach a human."
 agent.go()
 ```
 
-In the code above we initialized our agent with the maneuver tools we created earlier. You can provide any model in LangChain notation. Next, we hard-coding a task for our agent and running it.
+在上面的代码中，我们使用之前创建的移动工具初始化了agent。您可以提供LangChain表示法中的任何模型。接下来，我们为agent硬编码一个任务并运行它。
 
-Before going to LLM, camera image is specially augmented to make it easier for robot to understand its environment: 
+在发送到LLM之前，摄像头图像经过特殊增强，使机器人更容易理解其环境：
 
 <div style="text-align: center; font-style: italic">
   <img src="https://github.com/user-attachments/assets/296f6f60-52a4-4fa0-9a77-a113b4868f83" width="60%">
-  <p>That's how your robot sees the world.</p>
+  <p>这就是您的机器人看到的世界。</p>
 </div>
 
-Also, create the `.env` file with parameter `GOOGLE_API_KEY=<your gemini api key here>` beside the script to connect to LLM.
+此外，在脚本旁边创建`.env`文件，参数为`GOOGLE_API_KEY=<your gemini api key here>`以连接到LLM。
 
-Now run the code and watch your XLeRobot approaching you - then it will finish its work by calling `finish_task` tool!
+现在运行代码，观看您的XLeRobot接近您——然后它将通过调用`finish_task`工具完成工作！
 
-Complete code is here:
+完整代码在这里：
 
 ```python
 from robocrew.core.camera import RobotCamera
@@ -83,20 +83,20 @@ from robocrew.core.LLMAgent import LLMAgent
 from robocrew.robots.XLeRobot.tools import create_move_forward, create_turn_right, create_turn_left
 from robocrew.robots.XLeRobot.servo_controls import ServoControler
 
-# set up main camera
-main_camera = RobotCamera("/dev/camera_center") # camera usb port Eg: /dev/video0
+# 设置主摄像头
+main_camera = RobotCamera("/dev/camera_center") # 摄像头usb端口 例如: /dev/video0
 
-#set up servo controler
-right_arm_wheel_usb = "/dev/arm_right"    # provide your right arm usb port. Eg: /dev/ttyACM1
-left_arm_head_usb = "/dev/arm_left"      # provide your left arm usb port. Eg: /dev/ttyACM0
+#设置舵机控制器
+right_arm_wheel_usb = "/dev/arm_right"    # 提供您的右臂usb端口。例如: /dev/ttyACM1
+left_arm_head_usb = "/dev/arm_left"      # 提供您的左臂usb端口。例如: /dev/ttyACM0
 servo_controler = ServoControler(right_arm_wheel_usb, left_arm_head_usb)
 
-#set up tools
+#设置工具
 move_forward = create_move_forward(servo_controler)
 turn_left = create_turn_left(servo_controler)
 turn_right = create_turn_right(servo_controler)
 
-# init agent
+# 初始化agent
 agent = LLMAgent(
     model="google_genai:gemini-3-flash-preview",
     tools=[move_forward, turn_left, turn_right],
@@ -109,31 +109,31 @@ agent.task = "Approach a human."
 agent.go()
 ```
 
-### Set up Udev rules
+### 设置Udev规则
 
-Before proceeding to more advanced examples, let's do optional, but highly recommended step - make the usb port names for arms and cameras constant, to avoid swapping those names after every Raspberry Pi reboot. To do it, we need to set up udev rules. Luckily, RoboCrew already contains an utility that makes a complicated process of setting up udevs a matter of few clicks.
+在进行更高级的示例之前，让我们做一个可选但强烈推荐的步骤——使手臂和摄像头的usb端口名称保持恒定，以避免在每次树莓派重启后交换这些名称。要做到这一点，我们需要设置udev规则。幸运的是，RoboCrew已经包含了一个实用程序，使设置udev的复杂过程只需几次点击即可完成。
 
-Run:
+运行：
 
 ```bash
 robocrew-setup-usb-modules
 ```
 
-Utility will ask you to disconnect all usbs and then connect one after another - that way your usb devices will receive a constant names.
+实用程序将要求您断开所有usb连接，然后逐个连接——这样您的usb设备将获得恒定的名称。
 
-### Voice-conrolled agent
+### 语音控制的agent
 
-We managed to run our simple agent, now let's give it an ability to listen to our voice commands through the microphone.
+我们已经成功运行了简单的agent，现在让我们给它通过麦克风听取语音命令的能力。
 
-First, we need to install Portaudio, to enable our control device to hear:
+首先，我们需要安装Portaudio，以使我们的控制设备能够听到：
 
 ```bash
 sudo apt install portaudio19-dev
 ```
 
-Connect to your agent a soundcard with microphone, and optionally speaker, if you want robot to respond to you.
+将带有麦克风的声卡连接到您的agent，如果需要机器人响应您，还可以选择连接扬声器。
 
-Let's change the agent initialization a little bit:
+让我们稍微改变一下agent的初始化：
 
 ```python
 agent = LLMAgent(
@@ -141,23 +141,23 @@ agent = LLMAgent(
     tools=[move_forward, turn_left, turn_right],
     main_camera=main_camera,
     servo_controler=servo_controler,
-    sounddevice_index=2,    # provide your microphone device index.
-    wakeword="hey robot",   # optional - set up custom wakeword (default is "robot")
-    tts=True,               # enable text-to-speech (robot can speak).
+    sounddevice_index=2,    # 提供您的麦克风设备索引。
+    wakeword="hey robot",   # 可选 - 设置自定义唤醒词（默认为"robot"）
+    tts=True,               # 启用文本转语音（机器人可以说话）。
 )
 
 agent.go()
 ```
 
-As you can see, we need to provide index of our soundcard with microphone. We can also set up a wakeword (default is "robot") - when robot hears that word in your sentence, it treats sentence as a new task; otherwise ignores it.
+如您所见，我们需要提供带有麦克风的声卡索引。我们还可以设置唤醒词（默认为"robot"）——当机器人在您的句子中听到该词时，它会将句子视为新任务；否则会忽略它。
 
-`tts=True` is needed if you want robot to speak.
+如果您希望机器人说话，需要`tts=True`。
 
-We can also set up `history_len` - how many of last movements robot should keep in the memory, to avoid memory overflow.
+我们还可以设置`history_len`——机器人应该在内存中保留多少最近的动作，以避免内存溢出。
 
-Run the code and ask the robot to go somewhere!
+运行代码并让机器人去某个地方！
 
-Complete code is here:
+完整代码在这里：
 
 ```python
 from robocrew.core.camera import RobotCamera
@@ -165,27 +165,27 @@ from robocrew.core.LLMAgent import LLMAgent
 from robocrew.robots.XLeRobot.tools import create_move_forward, create_turn_right, create_turn_left
 from robocrew.robots.XLeRobot.servo_controls import ServoControler
 
-# set up main camera
-main_camera = RobotCamera("/dev/camera_center") # camera usb port Eg: /dev/video0
+# 设置主摄像头
+main_camera = RobotCamera("/dev/camera_center") # 摄像头usb端口 例如: /dev/video0
 
-#set up servo controler
-right_arm_wheel_usb = "/dev/arm_right"    # provide your right arm usb port. Eg: /dev/ttyACM1
+#设置舵机控制器
+right_arm_wheel_usb = "/dev/arm_right"    # 提供您的右臂usb端口。例如: /dev/ttyACM1
 servo_controler = ServoControler(right_arm_wheel_usb=right_arm_wheel_usb)
 
-#set up tools
+#设置工具
 move_forward = create_move_forward(servo_controler)
 turn_left = create_turn_left(servo_controler)
 turn_right = create_turn_right(servo_controler)
 
-# init agent
+# 初始化agent
 agent = LLMAgent(
     model="google_genai:gemini-3-flash-preview",
     tools=[move_forward, turn_left, turn_right],
     main_camera=main_camera,
     servo_controler=servo_controler,
-    sounddevice_index=2,    # provide your microphone device index.
-    wakeword="hey robot",   # optional - set up custom wakeword (default is "robot")
-    tts=True,               # enable text-to-speech (robot can speak).
+    sounddevice_index=2,    # 提供您的麦克风设备索引。
+    wakeword="hey robot",   # 可选 - 设置自定义唤醒词（默认为"robot"）
+    tts=True,               # 启用文本转语音（机器人可以说话）。
 )
 
 agent.task = "Wait for the voice commands and execute."
@@ -193,13 +193,13 @@ agent.task = "Wait for the voice commands and execute."
 agent.go()
 ```
 
-### Activate arm manipulation
+### 激活手臂操作
 
-Let's go to the most advanced and useful part of our agent - the arms manipulation through VLA policies! That allows the robot to make full range of household tasks - like throwing out a trash or bringing you a tea from kitchen.
+让我们进入agent最先进和最有用的部分——通过VLA策略进行手臂操作！这允许机器人执行全方位的家务任务——比如扔垃圾或从厨房给您端茶。
 
-First of all, you need to train the policy agent will utilize later. Reference [VLA tutorial](https://xlerobot.readthedocs.io/en/latest/software/getting_started/RL_VLA.html) to learn how to do it.
+首先，您需要训练agent稍后将使用的策略。参考[VLA教程](https://xlerobot.readthedocs.io/en/latest/software/getting_started/VLA_ACT.html)了解如何操作。
 
-Let's assume you trained VLA policy that grabs a notebook from the table and put it in the robot basket (for further transportation). Let's add it as a tool for your agent:
+让我们假设您训练了一个VLA策略，可以从桌子上抓取笔记本并将其放入机器人篮子中（用于进一步运输）。让我们将其添加为您agent的工具：
 
 ```python
 from robocrew.robots.XLeRobot.tools import create_vla_single_arm_manipulation
@@ -219,11 +219,11 @@ pick_up_notebook = create_vla_single_arm_manipulation(
 )
 ```
 
-Provide the tool with parameters your custom tool name and description - that's what LLM will see. Also, provide VLA-related parameters - as the name of your trained policy on HF hub, policy type, camera config (same you used during dataset collection).
+为工具提供自定义工具名称和描述参数——这就是LLM将看到的内容。此外，提供VLA相关参数——如您在HF hub上训练的策略名称、策略类型、摄像头配置（与数据集收集期间使用的相同）。
 
-Then add created `pick_up_notebook` tool to the tools of your agent. You can create as many manipulation tools as you want.
+然后将创建的`pick_up_notebook`工具添加到agent的工具中。您可以创建任意数量的操作工具。
 
-Our tool is a policy client, but all VLA computations are run on the server side. We need to run policy server - on Raspberry Pi only in case of light-weight ACT policy, on different computer for all other policies. Run your server with:
+我们的工具是策略客户端，但所有VLA计算都在服务器端运行。我们需要运行策略服务器——仅在轻量级ACT策略的情况下在树莓派上运行，对于所有其他策略，需要在不同的计算机上运行。使用以下命令运行服务器：
 
 ```
 python -m lerobot.async_inference.policy_server \
@@ -231,11 +231,11 @@ python -m lerobot.async_inference.policy_server \
      --port=8080
 ```
 
-In case you using external computer in your local network as a server, provide its IP instead of zeros to `server_address` parameter like: `server_address="123.234.12.34:8080"`
+如果您使用本地网络中的外部计算机作为服务器，请将其IP提供给`server_address`参数，而不是零，例如：`server_address="123.234.12.34:8080"`
 
-That's it! Prompt your robot to grab a notebook from the table and give it to you!
+就是这样！提示您的机器人从桌子上抓取笔记本并交给您！
 
-In the full code, we also added more movement tools for more precision navigation:
+在完整代码中，我们还添加了更多移动工具以实现更精确的导航：
 
 ```python
 from robocrew.core.camera import RobotCamera
@@ -254,15 +254,15 @@ from robocrew.robots.XLeRobot.tools import \
 from robocrew.robots.XLeRobot.servo_controls import ServoControler
 
 
-# set up main camera
-main_camera = RobotCamera("/dev/camera_center") # camera usb port Eg: /dev/video0
+# 设置主摄像头
+main_camera = RobotCamera("/dev/camera_center") # 摄像头usb端口 例如: /dev/video0
 
-#set up servo controler
-right_arm_wheel_usb = "/dev/arm_right"    # provide your right arm usb port. Eg: /dev/ttyACM1
-left_arm_head_usb = "/dev/arm_left"      # provide your left arm usb port. Eg: /dev/ttyACM0
+#设置舵机控制器
+right_arm_wheel_usb = "/dev/arm_right"    # 提供您的右臂usb端口。例如: /dev/ttyACM1
+left_arm_head_usb = "/dev/arm_left"      # 提供您的左臂usb端口。例如: /dev/ttyACM0
 servo_controler = ServoControler(right_arm_wheel_usb, left_arm_head_usb)
 
-#set up tools
+#设置工具
 move_forward = create_move_forward(servo_controler)
 move_backward = create_move_backward(servo_controler)
 turn_left = create_turn_left(servo_controler)
@@ -303,7 +303,7 @@ give_notebook = create_vla_single_arm_manipulation(
     execution_time=45,
 )
 
-# init agent
+# 初始化agent
 agent = LLMAgent(
     model="google_genai:gemini-3-flash-preview",
     system_prompt=system_prompt,
@@ -331,3 +331,4 @@ agent.task = "Approach blue notebook, grab it from the table and give it to huma
 
 agent.go()
 ```
+

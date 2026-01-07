@@ -16,13 +16,15 @@ import queue
 
 # Third-party imports
 import numpy as np
-from lerobot.datasets.lerobot_dataset import LeRobotDataset
 
 # Local imports
 from XLeVR.vr_monitor import VRMonitor
 from lerobot.robots.xlerobot import XLerobotConfig, XLerobot
-from lerobot.utils.robot_utils import busy_wait
+from lerobot.utils.robot_utils import precise_sleep
 from lerobot.model.SO101Robot import SO101Kinematics
+from lerobot.datasets.lerobot_dataset import LeRobotDataset
+from lerobot.utils.constants import ACTION, OBS_STR
+from lerobot.datasets.utils import hw_to_dataset_features, build_dataset_frame
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -277,14 +279,19 @@ class SimpleTeleopArm:
         Returns:
             dict: Action dictionary with position commands for each joint
         """
-        obs = robot.get_observation()
-        current = {j: obs[f"{self.prefix}_arm_{j}.pos"] for j in self.joint_map}
+        if self.prefix=="left":
+            obs_raw = robot.bus_1.sync_read("Present_Position", robot.left_arm_motors)
+        else:
+            obs_raw = robot.bus_2.sync_read("Present_Position", robot.right_arm_motors)
+
+        obs_pos_suffix = {f"{v}.pos": obs_raw[v] for v in self.joint_map.values()}
+        current = {k: obs_raw[v] for k, v in self.joint_map.items()}
         action = {}
         for j in self.target_positions:
             error = self.target_positions[j] - current[j]
             control = self.kp * error
             action[f"{self.joint_map[j]}.pos"] = current[j] + control
-        return action
+        return action, obs_pos_suffix
 
 
 class SimpleHeadControl:
@@ -337,10 +344,10 @@ class SimpleHeadControl:
         Returns:
             dict: Action dictionary with position commands for head motors
         """
-        obs = robot.get_observation()
+        obs_raw = robot.bus_1.sync_read("Present_Position", robot.head_motors)
         action = {}
         for motor in self.target_positions:
-            current = obs.get(f"{HEAD_MOTOR_MAP[motor]}.pos", 0.0)
+            current = obs_raw.get(HEAD_MOTOR_MAP[motor], 0.0)
             error = self.target_positions[motor] - current
             control = self.kp * error
             action[f"{HEAD_MOTOR_MAP[motor]}.pos"] = current + control
@@ -456,68 +463,67 @@ def get_vr_speed_control(vr_goal):
     return current_base_speed
 
 
-def init_dataset():
-    features = {
-        "action": {
-            "dtype": "float32",
-            "shape": (6,),
-            "names": [
-                #"left_arm_shoulder_pan.pos", "left_arm_shoulder_lift.pos", "left_arm_elbow_flex.pos", 
-                #"left_arm_wrist_flex.pos", "left_arm_wrist_roll.pos", "left_arm_gripper.pos",
-                "right_arm_shoulder_pan.pos", "right_arm_shoulder_lift.pos", "right_arm_elbow_flex.pos", 
-                "right_arm_wrist_flex.pos", "right_arm_wrist_roll.pos", "right_arm_gripper.pos",]
-        },
-        "observation.state": {
-            "dtype": "float32",
-            "shape": (6,),
-            "names": [
-                #"left_arm_shoulder_pan.pos", "left_arm_shoulder_lift.pos", "left_arm_elbow_flex.pos", 
-                #"left_arm_wrist_flex.pos", "left_arm_wrist_roll.pos", "left_arm_gripper.pos",
-                "right_arm_shoulder_pan.pos", "right_arm_shoulder_lift.pos", "right_arm_elbow_flex.pos", 
-                "right_arm_wrist_flex.pos", "right_arm_wrist_roll.pos", "right_arm_gripper.pos",]
-        },
-        "observation.images.main": {
-            "dtype": "video",
-            "shape": (480, 640, 3),
-            "names": ["height", "width", "channel"],
-        },
-        # "observation.images.right_arm": {
-        #     "dtype": "video",
-        #     "shape": (480, 640, 3),
-        #     "names": ["height", "width", "channel"],
-        # },
-        "observation.images.left_arm": {
-            "dtype": "video",
-            "shape": (480, 640, 3),
-            "names": ["height", "width", "channel"],
-        },
-        "timestamp": {
-            "dtype": "float32",
-            "shape": (1,),
-            "names": None
-        },
-    }
+def init_dataset(robot):
+    if ENABLE_LEFT_HAND:
+        features = {
+            "action": {
+                "dtype": "float32",
+                "shape": (12,),
+                "names": [
+                    "left_arm_shoulder_pan.pos", "left_arm_shoulder_lift.pos", "left_arm_elbow_flex.pos", 
+                    "left_arm_wrist_flex.pos", "left_arm_wrist_roll.pos", "left_arm_gripper.pos",
+                    "right_arm_shoulder_pan.pos", "right_arm_shoulder_lift.pos", "right_arm_elbow_flex.pos", 
+                    "right_arm_wrist_flex.pos", "right_arm_wrist_roll.pos", "right_arm_gripper.pos",]
+            },
+            "observation.state": {
+                "dtype": "float32",
+                "shape": (12,),
+                "names": [
+                    "left_arm_shoulder_pan.pos", "left_arm_shoulder_lift.pos", "left_arm_elbow_flex.pos", 
+                    "left_arm_wrist_flex.pos", "left_arm_wrist_roll.pos", "left_arm_gripper.pos",
+                    "right_arm_shoulder_pan.pos", "right_arm_shoulder_lift.pos", "right_arm_elbow_flex.pos", 
+                    "right_arm_wrist_flex.pos", "right_arm_wrist_roll.pos", "right_arm_gripper.pos",]
+            },
+        }
+    else:
+        features = {
+            "action": {
+                "dtype": "float32",
+                "shape": (6,),
+                "names": [
+                    "right_arm_shoulder_pan.pos", "right_arm_shoulder_lift.pos", "right_arm_elbow_flex.pos", 
+                    "right_arm_wrist_flex.pos", "right_arm_wrist_roll.pos", "right_arm_gripper.pos",]
+            },
+            "observation.state": {
+                "dtype": "float32",
+                "shape": (6,),
+                "names": [
+                    "right_arm_shoulder_pan.pos", "right_arm_shoulder_lift.pos", "right_arm_elbow_flex.pos", 
+                    "right_arm_wrist_flex.pos", "right_arm_wrist_roll.pos", "right_arm_gripper.pos",]
+            },
+        }
+    camera_features = hw_to_dataset_features(robot._cameras_ft, OBS_STR)
+    features = {**features, **camera_features}
     import time
     dataset = LeRobotDataset.create(
         repo_id=DATASET_REPO,
         root=f"my_dataset_{time.time()}",
         features=features,
         fps=FPS,
-        image_writer_processes=0,
-        image_writer_threads=4,
+        image_writer_processes=10,
+        image_writer_threads=5,
     )
     return dataset
 
 
 
-def saving_dataset_worker(frame_queue, shutdown_event, saving_in_progress_event):
+def saving_dataset_worker(dataset, frame_queue, shutdown_event, saving_in_progress_event):
     """
     Worker function to save dataset frames in the background.
     
     Continuously checks for new dataset frames and saves them to disk.
     """
     try:
-        dataset = init_dataset()
         # save videos into separate files to avoid concatenation problems
         dataset.meta.update_chunk_settings(video_files_size_in_mb=0.001)
         recording_dataset = True
@@ -572,7 +578,7 @@ def main():
     shutdown_event = threading.Event()
     saving_in_progress_event = threading.Event()
 
-    robot, vr_monitor, camera_main, camera_left, dataset_saving_thread = None, None, None, None, None
+    robot, vr_monitor, dataset_saving_thread = None, None, None
 
     try:
         # Try to use saved calibration file to avoid recalibrating each time
@@ -620,21 +626,10 @@ def main():
             head_control.move_to_zero_position(robot)
         
         # Main VR control loop
-        from lerobot.cameras.opencv import OpenCVCamera
-        from lerobot.cameras.opencv.configuration_opencv import OpenCVCameraConfig
-		
-        config_main_camera = OpenCVCameraConfig(index_or_path=MAIN_CAMERA_INDEX)
-        #config_right_camera = OpenCVCameraConfig(index_or_path=RIGHT_ARM_CAMERA_INDEX)
-        config_left_camera =  OpenCVCameraConfig(index_or_path=LEFT_ARM_CAMERA_INDEX)
-        camera_main = OpenCVCamera(config_main_camera)
-        #camera_right = OpenCVCamera(config_right_camera) 
-        camera_left = OpenCVCamera(config_left_camera)
-        camera_main.connect()
-        #camera_right.connect()
-        camera_left.connect()
         print("Starting VR control loop.")
         frame_queue = queue.Queue()
-        thread_args = (frame_queue, shutdown_event, saving_in_progress_event)
+        dataset = init_dataset(robot)
+        thread_args = (dataset, frame_queue, shutdown_event, saving_in_progress_event)
         dataset_saving_thread = threading.Thread(target=saving_dataset_worker, args=thread_args, daemon=False)
         dataset_saving_thread.start()
 
@@ -643,6 +638,8 @@ def main():
                 print("[MAIN] Waiting for dataset saving to complete...  ", end='\r')
                 time.sleep(0.1)
                 continue
+            
+            start_loop_t = time.perf_counter()
 
             # Get VR controller data
             dual_goals = vr_monitor.get_latest_goal_nowait()
@@ -661,8 +658,8 @@ def main():
             right_arm.handle_vr_input(right_goal, gripper_state=None)
             
             # Get actions from both arms and head
-            left_action = left_arm.p_control_action(robot) if (ENABLE_LEFT_HAND and left_arm) else {}
-            right_action = right_arm.p_control_action(robot)
+            left_action, left_obs = left_arm.p_control_action(robot) if (ENABLE_LEFT_HAND and left_arm is not None) else ({}, {})
+            right_action, right_obs = right_arm.p_control_action(robot)
             head_action = head_control.p_control_action(robot) if (ENABLE_HEAD and head_control) else {}
 
             # Get base control from VR
@@ -677,26 +674,24 @@ def main():
             # Merge all actions
             action = {**left_action, **right_action, **head_action, **base_action}
             robot.send_action(action)
+            
+            # Get camera frames through async_read
+            camera_obs = robot.get_camera_observation()
 
-            #print(f"observation {robot.get_observation()}")
-            #print(f"action: {action}")
-            
-            image_array_main = camera_main.read()
-            #image_array_right = camera_right.read()
-            image_array_left = camera_left.read()
-            #action_values = list(left_action.values())
-            #action_values.extend(right_action.values())
-            action_values = list(right_action.values())
-            
-            lerobot_frame = {
-                'action': np.array(action_values, dtype=np.float32),
-                'observation.state': np.array(list(robot.get_observation().values())[6:12], dtype=np.float32),
-                'observation.images.main': image_array_main,
-                #'observation.images.right_arm': image_array_right,
-                'observation.images.left_arm': image_array_left,
-                'task': TASK,
-            }
+            # Merge action and observation features for new dataset frame
+            if (ENABLE_LEFT_HAND and left_arm):
+                action_features = {**left_action, **right_action}
+                obs_features = {**left_obs, **right_obs, **camera_obs}
+            else:
+                action_features = right_action
+                obs_features = { **right_obs, **camera_obs}
+            action_frame = build_dataset_frame(dataset.features, action_features, prefix=ACTION)
+            observation_frame = build_dataset_frame(dataset.features, obs_features, prefix=OBS_STR)
+            lerobot_frame = {**observation_frame, **action_frame, "task": TASK}
             frame_queue.put(lerobot_frame)
+
+            dt_s = time.perf_counter() - start_loop_t
+            precise_sleep(1 / FPS - dt_s)
         
     except Exception as e:
         print(f"Program execution failed: {e}")
@@ -709,17 +704,9 @@ def main():
         if dataset_saving_thread and dataset_saving_thread.is_alive():
             print("[MAIN] Waiting for dataset saving thread to finish...")
             dataset_saving_thread.join()
-
-        if camera_main:
-            camera_main.disconnect()
-        #if camera_right:
-        #    camera_right.disconnect()
-        if camera_left:
-            camera_left.disconnect()       
+   
         if robot:
             robot.disconnect()
-
-
 
 if __name__ == "__main__":
     main()

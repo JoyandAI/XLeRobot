@@ -547,19 +547,25 @@ class XLerobot(Robot):
         left_arm_state = {f"{k}.pos": v for k, v in left_arm_pos.items()}
         right_arm_state = {f"{k}.pos": v for k, v in right_arm_pos.items()}
         head_state = {f"{k}.pos": v for k, v in head_pos.items()}
-        # Combine all arm and head states
-        obs_dict = {**left_arm_state, **right_arm_state, **head_state, **base_vel}
-
         dt_ms = (time.perf_counter() - start) * 1e3
         logger.debug(f"{self} read state: {dt_ms:.1f}ms")
 
         # Capture images from cameras
+        camera_obs = self.get_camera_observation()
+
+        # Combine all observations
+        obs_dict = {**left_arm_state, **right_arm_state, **head_state, **base_vel, **camera_obs}
+
+        return obs_dict
+    
+    def get_camera_observation(self):
+        obs_dict = {}
         for cam_key, cam in self.cameras.items():
             start = time.perf_counter()
             obs_dict[cam_key] = cam.async_read()
             dt_ms = (time.perf_counter() - start) * 1e3
             logger.debug(f"{self} read {cam_key}: {dt_ms:.1f}ms")
-
+        
         return obs_dict
 
     def send_action(self, action: dict[str, Any]) -> dict[str, Any]:
