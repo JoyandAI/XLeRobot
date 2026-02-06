@@ -204,12 +204,12 @@ class VRWebSocketServer(BaseInputProvider):
                         button_info.append(f"[{hand_name}] Buttons: {', '.join(pressed_buttons)}")
         
         # 只在有操作时打印
-        if has_thumbstick_or_button_activity:
-            print(f"[VR_WS] Activity detected:")
-            for info in thumbstick_info:
-                print(f"  {info}")
-            for info in button_info:
-                print(f"  {info}")
+        # if has_thumbstick_or_button_activity:
+        #     print(f"[VR_WS] Activity detected:")
+        #     for info in thumbstick_info:
+        #         print(f"  {info}")
+        #     for info in button_info:
+        #         print(f"  {info}")
         
         # Process headset data if available
         if 'headset' in data:
@@ -219,8 +219,8 @@ class VRWebSocketServer(BaseInputProvider):
                 rot = headset_data.get('rotation', {})
                 quat = headset_data.get('quaternion', {})
                 
-                print(f"[VR_WS] Headset - Position: [{pos.get('x', 0):.3f}, {pos.get('y', 0):.3f}, {pos.get('z', 0):.3f}], "
-                      f"Rotation: [{rot.get('x', 0):.1f}, {rot.get('y', 0):.1f}, {rot.get('z', 0):.1f}]")
+                # print(f"[VR_WS] Headset - Position: [{pos.get('x', 0):.3f}, {pos.get('y', 0):.3f}, {pos.get('z', 0):.3f}], "
+                #      f"Rotation: [{rot.get('x', 0):.1f}, {rot.get('y', 0):.1f}, {rot.get('z', 0):.1f}]")
                 
                 # Create headset ControlGoal
                 headset_position = np.array([pos.get('x', 0), pos.get('y', 0), pos.get('z', 0)])
@@ -255,6 +255,8 @@ class VRWebSocketServer(BaseInputProvider):
         grip_active = data.get('gripActive', False)
         trigger = data.get('trigger', 0)
         thumbstick = data.get('thumbstick', {})
+        buttons = data.get("buttons", {}) #get buttons A,B
+
         
         controller = self.left_controller if hand == 'left' else self.right_controller
         
@@ -272,7 +274,8 @@ class VRWebSocketServer(BaseInputProvider):
                     "source": "vr_trigger",
                     "trigger": trigger,
                     "trigger_active": trigger_active,
-                    "thumbstick": thumbstick
+                    "thumbstick": thumbstick,
+                    "buttons": buttons,
                 }
             )
             await self.send_goal(gripper_goal)
@@ -306,7 +309,8 @@ class VRWebSocketServer(BaseInputProvider):
                         "reset_target_to_current": True,
                         "trigger": trigger,
                         "trigger_active": trigger_active,
-                        "thumbstick": thumbstick
+                        "thumbstick": thumbstick,
+                        "buttons": buttons,                    
                     }
                 )
                 await self.send_goal(reset_goal)
@@ -343,7 +347,8 @@ class VRWebSocketServer(BaseInputProvider):
                     "scaled_position": absolute_position.tolist(),
                     "trigger": trigger,
                     "trigger_active": trigger_active,
-                    "thumbstick": thumbstick
+                    "thumbstick": thumbstick,
+                    "buttons": buttons,
                 }
             )
             await self.send_goal(goal)
