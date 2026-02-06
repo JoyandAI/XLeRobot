@@ -12,16 +12,12 @@ import time
 import numpy as np
 import math
 
-from lerobot.robots.xlerobot import XLerobotConfig, XLerobot
-# from lerobot.robots.xlerobot import XLerobotClient, XLerobotClientConfig
-from lerobot.utils.robot_utils import busy_wait
+#from lerobot.robots.xlerobot import XLerobotConfig, XLerobot
+from lerobot.robots.xlerobot.xlerobot_client import XLerobotClient, XLerobotClientConfig
+#from lerobot.utils.robot_utils import busy_wait
 from lerobot.utils.visualization_utils import init_rerun, log_rerun_data
 from lerobot.model.SO101Robot import SO101Kinematics
-# from lerobot.teleoperators.keyboard.teleop_keyboard import KeyboardTeleop, KeyboardTeleopConfig
-
-        
-from lerobot.teleoperators.keyboard.teleop_keyboard import KeyboardTeleop
-from lerobot.teleoperators.keyboard.configuration_keyboard import KeyboardTeleopConfig
+from lerobot.teleoperators.keyboard.teleop_keyboard import KeyboardTeleop, KeyboardTeleopConfig
 
 # Keymaps (semantic action: key)
 LEFT_KEYMAP = {
@@ -387,17 +383,17 @@ class SimpleTeleopArm:
 def main():
     # Teleop parameters
     FPS = 50
-    # ip = "192.168.1.123"  # This is for zmq connection
-    ip = "localhost"  # This is for local/wired connection
-    robot_name = "my_xlerobot_pc"
+    ip = "192.168.200.104"  # This is for zmq connection
+    #ip = "localhost"  # This is for local/wired connection
+    robot_name = "joyandai_xlerobot1"
 
     # For zmq connection
-    # robot_config = XLerobotClientConfig(remote_ip=ip, id=robot_name)
-    # robot = XLerobotClient(robot_config)    
+    robot_config = XLerobotClientConfig(remote_ip=ip, id=robot_name)
+    robot = XLerobotClient(robot_config)    
 
     # For local/wired connection
-    robot_config = XLerobotConfig()
-    robot = XLerobot(robot_config)
+    # robot_config = XLerobotConfig()
+    # robot = XLerobot(robot_config)
     
     try:
         robot.connect()
