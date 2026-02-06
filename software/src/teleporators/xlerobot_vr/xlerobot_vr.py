@@ -188,12 +188,10 @@ class SimpleTeleopArm:
             self.prev_vr_pos = current_vr_pos
             return  # Skip first frame to establish baseline
         
-        # print(current_vr_pos)
-        
         # Calculate relative change (delta) from previous frame
-        vr_x = (current_vr_pos[0] - self.prev_vr_pos[0]) * 170  # Scale for the shoulder
-        vr_y = (current_vr_pos[1] - self.prev_vr_pos[1]) * 80
-        vr_z = (current_vr_pos[2] - self.prev_vr_pos[2]) * 80
+        vr_x = (current_vr_pos[0] - self.prev_vr_pos[0]) * 220 # Scale for the shoulder
+        vr_y = (current_vr_pos[1] - self.prev_vr_pos[1]) * 110 
+        vr_z = (current_vr_pos[2] - self.prev_vr_pos[2]) * 110
 
         # print(f'vr_x: {vr_x}, vr_y: {vr_y}, vr_z: {vr_z}')
 
@@ -201,31 +199,22 @@ class SimpleTeleopArm:
         self.prev_vr_pos = current_vr_pos
         
         # Delta control parameters - adjust these for sensitivity
-        pos_scale = 0.015  # Position sensitivity scaling
-        angle_scale = 3.0  # Angle sensitivity scaling
-        delta_limit = 0.02  # Maximum delta per update (meters)
+        pos_scale = 0.02  # Position sensitivity scaling
+        angle_scale = 2.0  # Angle sensitivity scaling
+        delta_limit = 0.01  # Maximum delta per update (meters)
         angle_limit = 6.0  # Maximum angle delta per update (degrees)
         
         delta_x = vr_x * pos_scale
         delta_y = vr_y * pos_scale  
         delta_z = vr_z * pos_scale
-
-        # Dead zone
-        threshold = 0.001
-        if delta_x < threshold and delta_x > -threshold:
-            delta_x = 0.0
-        if delta_y < threshold and delta_y > -threshold:
-            delta_y = 0.0
-        if delta_z < threshold and delta_z > -threshold:
-            delta_z = 0.0
-
+        
         # Limit delta values to prevent sudden movements
         delta_x = max(-delta_limit, min(delta_limit, delta_x))
         delta_y = max(-delta_limit, min(delta_limit, delta_y))
         delta_z = max(-delta_limit, min(delta_limit, delta_z))
         
-        self.current_x += -delta_z  # VR Z maps to robot x, change the direction
-        self.current_y += delta_y  # VR Y maps to robot y
+        self.current_x += -delta_z  # yy: VR Z maps to robot x, change the direction
+        self.current_y += delta_y  # yy:VR Y maps to robot y
 
         # Handle wrist angles with delta control - use relative changes
         if hasattr(vr_goal, 'wrist_flex_deg') and vr_goal.wrist_flex_deg is not None:
@@ -236,8 +225,6 @@ class SimpleTeleopArm:
             
             # Calculate relative change from previous frame
             delta_pitch = (vr_goal.wrist_flex_deg - self.prev_wrist_flex) * angle_scale
-            if delta_pitch < 1 and delta_pitch > -1:
-                delta_pitch = 0.0
             delta_pitch = max(-angle_limit, min(angle_limit, delta_pitch))
             self.pitch += delta_pitch
             self.pitch = max(-90, min(90, self.pitch))  # Limit pitch range
@@ -253,9 +240,6 @@ class SimpleTeleopArm:
             
             delta_roll = (vr_goal.wrist_roll_deg - self.prev_wrist_roll) * angle_scale
             delta_roll = max(-angle_limit, min(angle_limit, delta_roll))
-
-            if delta_roll < 1 and delta_roll > -1:
-                delta_roll = 0.0
             
             current_roll = self.target_positions.get("wrist_roll", 0.0)
             new_roll = current_roll + delta_roll
@@ -267,7 +251,7 @@ class SimpleTeleopArm:
         
         # VR Z axis controls shoulder_pan joint (delta control)
         if abs(delta_x) > 0.001:  # Only update if significant movement
-            x_scale = 200.0  # Reduced scaling factor for delta control
+            x_scale = 180.0  # Reduced scaling factor for delta control
             delta_pan = delta_x * x_scale
             delta_pan = max(-angle_limit, min(angle_limit, delta_pan))
             current_pan = self.target_positions.get("shoulder_pan", 0.0)
@@ -277,8 +261,8 @@ class SimpleTeleopArm:
         
         try:
             joint2_target, joint3_target = self.kinematics.inverse_kinematics(self.current_x, self.current_y)
-            # Smooth transition to new joint positions, smoothing factor 0-1, lower = smoother
-            alpha = 0.1
+            # Smooth transition to new joint positions,  Smoothing factor 0-1, lower = smoother
+            alpha = 0.27
             self.target_positions["shoulder_lift"] = (1-alpha) * self.target_positions.get("shoulder_lift", 0.0) + alpha * joint2_target
             self.target_positions["elbow_flex"] = (1-alpha) * self.target_positions.get("elbow_flex", 0.0) + alpha * joint3_target
         except Exception as e:
@@ -294,26 +278,69 @@ class SimpleTeleopArm:
         else:
             self.target_positions["gripper"] = 0.0
 
-    def p_control_action(self, robot_obs):
-        """
-        Generate proportional control action based on target positions.
+   
+    def get_action(self, robot_obs: Optional[Dict] = None, robot = None) -> dict[str, Any]:
+        """Get VR control action - high-performance optimized version, parallel processing of events and actions"""
+        before_read_t = time.perf_counter()
         
-        Args:
-            robot: Robot instance to get current observations
-            
-        Returns:
-            dict: Action dictionary with position commands for each joint
-        """
-        obs = robot_obs
-        current = {j: obs[f"{self.prefix}_arm_{j}.pos"] for j in self.joint_map}
         action = {}
-        for j in self.target_positions:
-            error = self.target_positions[j] - current[j]
-            control = self.kp * error
-            action[f"{self.joint_map[j]}.pos"] = current[j] + control
+        
+        # Quick check VR monitoring status
+        if not self.vr_monitor:
+            self.logs["read_pos_dt_s"] = time.perf_counter() - before_read_t
+            return action
+        
+        # Get VR data once to avoid repeated calls
+        try:
+            dual_goals = self.vr_monitor.get_latest_goal_nowait()
+            if dual_goals is None:
+                self.logs["read_pos_dt_s"] = time.perf_counter() - before_read_t
+                return action
+                
+            left_goal = dual_goals.get("left")
+            right_goal = dual_goals.get("right")
+            
+        except Exception as e:
+            logger.warning(f"VR data acquisition failed: {e}")
+            self.logs["read_pos_dt_s"] = time.perf_counter() - before_read_t
+            return action
+        
+        # Parallel processing: robot control at high frequency, event processing at low frequency
+        if robot_obs is not None:
+            try:
+                current_time = time.perf_counter()
+                
+                # Robot control - high frequency execution (60Hz)
+                if left_goal is not None:
+                    self.left_arm.handle_vr_input(left_goal, None)
+                    
+                if right_goal is not None:
+                    self.right_arm.handle_vr_input(right_goal, None)
+                
+                # # Event processing - low frequency execution (10Hz), only process when interval time is reached
+                # if (current_time - self.last_event_update_time) >= 0.1:
+                if left_goal is not None:
+                    self._update_events_inline(left_goal)
+                self.last_event_update_time = current_time
+                
+                # Quickly generate action dictionary
+                left_action = self.left_arm.p_control_action(robot_obs)
+                right_action = self.right_arm.p_control_action(robot_obs)
+                head_action = self.head_control.p_control_action(robot_obs)
+                base_action = get_vr_base_action(right_goal, robot)
+                
+                # Efficiently merge actions
+                action.update(left_action)
+                action.update(right_action)
+                action.update(head_action)
+                action.update(base_action)
+                
+            except Exception as e:
+                logger.error(f"Action generation failed: {e}")
+            
+        self.logs["read_pos_dt_s"] = time.perf_counter() - before_read_t
         return action
-
-
+   
 class SimpleHeadControl:
     """
     A class for controlling robot head motors using VR thumbstick input.
@@ -497,59 +524,73 @@ class XLerobotVRTeleop(Teleoperator):
         return self._calibrated
 
     def connect(self, calibrate: bool = True, robot=None) -> None:
-        """Establish VR connection - optimized version"""
+        """Establish VR connection and block until VR browser connects."""
         if self.is_connected:
-            raise RuntimeError(
-                "XLerobot VR is already connected. Do not run `connect()` twice."
-            )
+            raise RuntimeError("XLerobot VR is already connected. Do not run `connect()` twice.")
 
         if not VR_AVAILABLE:
-            raise RuntimeError(
-                "VR Monitor is not available. Please check VR system installation."
-            )
+            raise RuntimeError("VR Monitor is not available. Please check VR system installation.")
 
         try:
             logger.info("🔧 Initializing VR monitor...")
             self.vr_monitor = VRMonitor()
-            
-            # Use timeout mechanism to avoid infinite waiting
+
+            # Initialize VRMonitor (with timeout)
             init_success = False
             start_time = time.time()
-            timeout = 10.0  # 10 second timeout
-            
+            timeout = 10.0
+
             while time.time() - start_time < timeout:
                 if self.vr_monitor.initialize():
                     init_success = True
                     break
                 time.sleep(0.1)
-            
+
             if not init_success:
-                raise Exception("VR monitor initialization timeout")
-                
-            logger.info("🚀 Starting VR monitoring...")
+                raise RuntimeError("VR monitor initialization timeout")
+
+            logger.info("🚀 Starting VR monitoring thread...")
             self.vr_thread = threading.Thread(
-                target=lambda: asyncio.run(self.vr_monitor.start_monitoring()), 
+                target=lambda: asyncio.run(self.vr_monitor.start_monitoring()),
                 daemon=True
             )
             self.vr_thread.start()
-            
-            # Wait for thread to start
+
+            # Wait for VRMonitor thread to start
             time.sleep(0.5)
-            
             if not self.vr_thread.is_alive():
-                raise Exception("VR monitoring thread failed to start")
-                
+                raise RuntimeError("VR monitoring thread failed to start")
+
             logger.info("✅ VR system ready")
-            self._connected = True
-            
-            # Initialize VR event handler
+
+            # Initialize event handler
             self.vr_event_handler = VREventHandler(self.vr_monitor)
             logger.info("🎮 VR event handler initialized")
-            
+
+            # ⭐ BLOCK HERE UNTIL VR BROWSER CONNECTS ⭐
+            logger.info("⏳ Waiting for VR client to connect...")
+
+            wait_start = time.time()
+            connect_timeout = 60  # seconds
+
+            while True:
+                goals = self.vr_monitor.get_latest_goal_nowait()
+                if goals and (goals.get("has_left") or goals.get("has_right") or goals.get("has_headset")):
+                    logger.info("🎉 VR client connected!")
+                    break
+
+                if time.time() - wait_start > connect_timeout:
+                    raise RuntimeError("VR client connection timeout. Please open the VR browser page.")
+
+                time.sleep(0.1)
+
+            # Calibration
             if calibrate and robot is not None:
                 robot_obs = robot.get_observation(use_camera=False)
                 self.calibrate(robot_obs)
-                
+
+            self._connected = True
+
         except Exception as e:
             logger.error(f"[VR] Connection failed: {e}")
             self._connected = False
@@ -645,7 +686,7 @@ class XLerobotVRTeleop(Teleoperator):
             
         self.logs["read_pos_dt_s"] = time.perf_counter() - before_read_t
         return action
-    
+
     def _update_events_inline(self, left_goal):
         """
         Low frequency event update - 10Hz frequency, reuse already acquired left_goal data
