@@ -28,7 +28,17 @@ For basic version of XLeRobot, you don't need a RaspberryPi. Just use your lapto
 
 ### [Autonomous LLM Agent](getting_started/LLM_agent.md)
 
-### [Reinforcenment Learning (RL) & VLA](getting_started/RL_VLA.md)
+```{note}
+The VLA tutorials below came from different teams in the community. Thanks a lot for their efforts!
+```
+
+### [VLA (1) ACT](getting_started/VLA_ACT.md)
+
+### [VLA (2) SmolVLA and more](getting_started/VLA_smol.md)
+
+### [VLA (3) pi0.5](getting_started/VLA_pi05.md)
+
+### [Reinforcenment Learning (RL)](getting_started/RL.md)
 
 ### [Raspberri Pi Setup](getting_started/raspberry_pi_setup.md)
 
@@ -38,6 +48,9 @@ getting_started/install
 getting_started/SO101
 getting_started/XLeRobot_teleop
 getting_started/LLM_agent
-getting_started/RL_VLA
+getting_started/VLA_ACT
+getting_started/VLA_smol
+getting_started/VLA_pi05
+getting_started/RL
 getting_started/raspberry_pi_setup.md
 ```

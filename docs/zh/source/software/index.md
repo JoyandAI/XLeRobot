@@ -26,15 +26,31 @@
 
 ### [XLeRobot遥操作](getting_started/XLeRobot_teleop.md)
 
-### [强化学习(RL) & VLA](getting_started/RL_VLA.md)
+### [自主LLM Agent](getting_started/LLM_agent.md)
 
-## [树莓派设置](getting_started/raspberry_pi_setup.md)
+```{note}
+下面的VLA教程来自社区的不同团队。非常感谢他们的努力！
+```
+
+### [VLA (1) ACT](getting_started/VLA_ACT.md)
+
+### [VLA (2) SmolVLA and more](getting_started/VLA_smol.md)
+
+### [VLA (3) pi0.5](getting_started/VLA_pi05.md)
+
+### [强化学习(RL)](getting_started/RL.md)
+
+### [树莓派设置](getting_started/raspberry_pi_setup.md)
 
 
 ```{toctree}
 getting_started/install
 getting_started/SO101
 getting_started/XLeRobot_teleop
-getting_started/RL_VLA
+getting_started/LLM_agent
+getting_started/VLA_ACT
+getting_started/VLA_smol
+getting_started/VLA_pi05
+getting_started/RL
 getting_started/raspberry_pi_setup.md
 ```

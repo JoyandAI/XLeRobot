@@ -223,7 +223,18 @@ def p_control_loop(robot, keyboard, target_positions, start_positions, kp=0.5, c
                         joint_name, delta = joint_controls[key]
                         if joint_name in target_positions:
                             current_target = target_positions[joint_name]
-                            new_target = int(current_target + delta)
+                             
+                            if joint_name == 'gripper': 
+                                step = delta * 5.0 
+                                new_target = current_target + step
+                                new_target = max(0.0, min(100.0, new_target))
+                                
+                                print(f"Updated Gripper: {current_target:.1f}% -> {new_target:.1f}%")
+                            
+                            else: 
+                                new_target = int(current_target + delta)
+                                print(f"Updated joint {joint_name}: {current_target} -> {new_target}°")
+                            
                             target_positions[joint_name] = new_target
                             print(f"Updated target position {joint_name}: {current_target} -> {new_target}")
             
@@ -273,10 +284,16 @@ def main():
     print("="*50)
     
     try:
-        # Import necessary modules
-        from lerobot.robots.so100_follower import SO100Follower, SO100FollowerConfig
-        from lerobot.teleoperators.keyboard import KeyboardTeleop, KeyboardTeleopConfig
+
+        # from lerobot.robots.so100_follower import SO100Follower, SO100FollowerConfig
+        # from lerobot.teleoperators.keyboard import KeyboardTeleop, KeyboardTeleopConfig
+
+        from lerobot.robots.so_follower.so_follower import SO100Follower
+        from lerobot.robots.so_follower.config_so_follower import SO100FollowerConfig
         
+        from lerobot.teleoperators.keyboard.teleop_keyboard import KeyboardTeleop
+        from lerobot.teleoperators.keyboard.configuration_keyboard import KeyboardTeleopConfig
+                
         # Get port
         port = input("Please enter SO100 robot USB port (e.g.: /dev/ttyACM0): ").strip()
         

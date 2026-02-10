@@ -384,8 +384,14 @@ def main():
     
     try:
         # Import necessary modules
-        from lerobot.robots.so100_follower import SO100Follower, SO100FollowerConfig
-        from lerobot.teleoperators.keyboard import KeyboardTeleop, KeyboardTeleopConfig
+        # from lerobot.robots.so100_follower import SO100Follower, SO100FollowerConfig
+        # from lerobot.teleoperators.keyboard import KeyboardTeleop, KeyboardTeleopConfig
+
+        from lerobot.robots.so_follower.so_follower import SO100Follower
+        from lerobot.robots.so_follower.config_so_follower import SO100FollowerConfig
+        
+        from lerobot.teleoperators.keyboard.teleop_keyboard import KeyboardTeleop
+        from lerobot.teleoperators.keyboard.configuration_keyboard import KeyboardTeleopConfig
         
         # Get port
         port = input("Please enter the USB port for SO100 robot (e.g., /dev/ttyACM0): ").strip()

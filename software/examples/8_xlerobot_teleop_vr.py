@@ -12,16 +12,17 @@ import sys
 import threading
 import time
 import traceback
+import queue
 
 # Third-party imports
 import numpy as np
-import pygame
 
 # Local imports
-from vr_monitor import VRMonitor
+from lerobot.teleoperators.xlerobot_vr.vr_monitor import VRMonitor
 from lerobot.robots.xlerobot import XLerobotConfig, XLerobot
-from lerobot.utils.robot_utils import busy_wait
+from lerobot.utils.robot_utils import precise_sleep
 from lerobot.model.SO101Robot import SO101Kinematics
+from lerobot.utils.constants import ACTION, OBS_STR
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -62,6 +63,20 @@ JOINT_CALIBRATION = [
     ['gripper', 0.0, 1.0],           # Joint6: zero position offset, scale factor
 ]
 
+# --- Minimal flags to disable one whole hand and head teleop ---
+# Set to False to disable left-hand teleop and head teleop.
+# Re-enable by setting to True.
+ENABLE_LEFT_HAND = True
+ENABLE_HEAD = False
+
+EPISODE_LEN = 4500  # Number of steps per episode
+RESET_LEN = 150
+NR_OF_EPISODES = 110
+TASK = "Grab the cup"
+MAIN_CAMERA_INDEX = "/dev/ttyACM0" 
+RIGHT_ARM_CAMERA_INDEX = "/dev/video2"
+LEFT_ARM_CAMERA_INDEX = "/dev/video4"
+FPS = 30
 
 class SimpleTeleopArm:
     """
@@ -120,7 +135,7 @@ class SimpleTeleopArm:
         }
 
     def move_to_zero_position(self, robot):
-        print(f"[{self.prefix}] Moving to Zero Position: {self.zero_pos} ......")
+        # print(f"[{self.prefix}] Moving to Zero Position: {self.zero_pos} ......")
         self.target_positions = self.zero_pos.copy()
         
         # Reset kinematics variables to initial state
@@ -134,7 +149,7 @@ class SimpleTeleopArm:
         # Explicitly set wrist_flex
         self.target_positions["wrist_flex"] = 0.0
         
-        action = self.p_control_action(robot)
+        action,_ = self.p_control_action(robot)
         robot.send_action(action)
 
     def handle_vr_input(self, vr_goal, gripper_state):
@@ -161,12 +176,10 @@ class SimpleTeleopArm:
             self.prev_vr_pos = current_vr_pos
             return  # Skip first frame to establish baseline
         
-        print(current_vr_pos)
-        
         # Calculate relative change (delta) from previous frame
         vr_x = (current_vr_pos[0] - self.prev_vr_pos[0]) * 220 # Scale for the shoulder
-        vr_y = (current_vr_pos[1] - self.prev_vr_pos[1]) * 70 
-        vr_z = (current_vr_pos[2] - self.prev_vr_pos[2]) * 70
+        vr_y = (current_vr_pos[1] - self.prev_vr_pos[1]) * 110 
+        vr_z = (current_vr_pos[2] - self.prev_vr_pos[2]) * 110
 
         # print(f'vr_x: {vr_x}, vr_y: {vr_y}, vr_z: {vr_z}')
 
@@ -174,10 +187,10 @@ class SimpleTeleopArm:
         self.prev_vr_pos = current_vr_pos
         
         # Delta control parameters - adjust these for sensitivity
-        pos_scale = 0.01  # Position sensitivity scaling
-        angle_scale = 4.0  # Angle sensitivity scaling
+        pos_scale = 0.02  # Position sensitivity scaling
+        angle_scale = 2.0  # Angle sensitivity scaling
         delta_limit = 0.01  # Maximum delta per update (meters)
-        angle_limit = 8.0  # Maximum angle delta per update (degrees)
+        angle_limit = 7.0  # Maximum angle delta per update (degrees)
         
         delta_x = vr_x * pos_scale
         delta_y = vr_y * pos_scale  
@@ -226,7 +239,7 @@ class SimpleTeleopArm:
         
         # VR Z axis controls shoulder_pan joint (delta control)
         if abs(delta_x) > 0.001:  # Only update if significant movement
-            x_scale = 200.0  # Reduced scaling factor for delta control
+            x_scale = 180.0  # Reduced scaling factor for delta control
             delta_pan = delta_x * x_scale
             delta_pan = max(-angle_limit, min(angle_limit, delta_pan))
             current_pan = self.target_positions.get("shoulder_pan", 0.0)
@@ -237,7 +250,7 @@ class SimpleTeleopArm:
         try:
             joint2_target, joint3_target = self.kinematics.inverse_kinematics(self.current_x, self.current_y)
             # Smooth transition to new joint positions,  Smoothing factor 0-1, lower = smoother
-            alpha = 0.1
+            alpha = 0.3
             self.target_positions["shoulder_lift"] = (1-alpha) * self.target_positions.get("shoulder_lift", 0.0) + alpha * joint2_target
             self.target_positions["elbow_flex"] = (1-alpha) * self.target_positions.get("elbow_flex", 0.0) + alpha * joint3_target
         except Exception as e:
@@ -263,14 +276,19 @@ class SimpleTeleopArm:
         Returns:
             dict: Action dictionary with position commands for each joint
         """
-        obs = robot.get_observation()
-        current = {j: obs[f"{self.prefix}_arm_{j}.pos"] for j in self.joint_map}
+        if self.prefix=="left":
+            obs_raw = robot.bus1.sync_read("Present_Position", robot.left_arm_motors)
+        else:
+            obs_raw = robot.bus2.sync_read("Present_Position", robot.right_arm_motors)
+
+        obs_pos_suffix = {f"{v}.pos": obs_raw[v] for v in self.joint_map.values()}
+        current = {k: obs_raw[v] for k, v in self.joint_map.items()}
         action = {}
         for j in self.target_positions:
             error = self.target_positions[j] - current[j]
             control = self.kp * error
             action[f"{self.joint_map[j]}.pos"] = current[j] + control
-        return action
+        return action,obs_pos_suffix
 
 
 class SimpleHeadControl:
@@ -323,10 +341,10 @@ class SimpleHeadControl:
         Returns:
             dict: Action dictionary with position commands for head motors
         """
-        obs = robot.get_observation()
+        obs_raw = robot.bus1.sync_read("Present_Position", robot.head_motors)
         action = {}
         for motor in self.target_positions:
-            current = obs.get(f"{HEAD_MOTOR_MAP[motor]}.pos", 0.0)
+            current = obs_raw.get(HEAD_MOTOR_MAP[motor], 0.0)
             error = self.target_positions[motor] - current
             control = self.kp * error
             action[f"{HEAD_MOTOR_MAP[motor]}.pos"] = current + control
@@ -375,9 +393,9 @@ def get_vr_base_action(vr_goal, robot):
 
 
 # Base speed control parameters - adjustable slopes
-BASE_ACCELERATION_RATE = 2.0  # acceleration slope (speed/second)
-BASE_DECELERATION_RATE = 2.5  # deceleration slope (speed/second)
-BASE_MAX_SPEED = 3.0          # maximum speed multiplier
+BASE_ACCELERATION_RATE = 2.0/2  # acceleration slope (speed/second)
+BASE_DECELERATION_RATE = 2.5/2    # deceleration slope (speed/second)
+BASE_MAX_SPEED = 3.0/2          # maximum speed multiplier
 
 
 def get_vr_speed_control(vr_goal):
@@ -419,7 +437,7 @@ def get_vr_speed_control(vr_goal):
         # VR input active - accelerate
         if not is_accelerating:
             is_accelerating = True
-            print("[BASE] Starting acceleration")
+            # print("[BASE] Starting acceleration")
         
         # Linear acceleration
         current_base_speed += BASE_ACCELERATION_RATE * dt
@@ -429,17 +447,34 @@ def get_vr_speed_control(vr_goal):
         # No VR input - decelerate
         if is_accelerating:
             is_accelerating = False
-            print("[BASE] Starting deceleration")
+            #print("[BASE] Starting deceleration")
         
         # Linear deceleration
         current_base_speed -= BASE_DECELERATION_RATE * dt
         current_base_speed = max(current_base_speed, 0.0)
     
     # Print current speed (optional, for debugging)
-    if abs(current_base_speed) > 0.01:  # Only print when speed is not 0
-        print(f"[BASE] Current speed: {current_base_speed:.2f}")
+    # if abs(current_base_speed) > 0.01:  # Only print when speed is not 0
+        #print(f"[BASE] Current speed: {current_base_speed:.2f}")
     
     return current_base_speed
+
+
+
+def vr_ready(dual_goals):
+    """
+    VR is considered ready if at least one controller
+    has a valid target_position.
+    """
+    if not dual_goals:
+        return False
+
+    for k in ["left", "right"]:
+        g = dual_goals.get(k)
+        if g is not None and getattr(g, "target_position", None) is not None:
+            return True
+    return False
+
 
 
 def main():
@@ -451,14 +486,15 @@ def main():
     """
     print("XLerobot VR Control Example")
     print("="*50)
-    
-    # Initialize pygame for keyboard input handling
-    pygame.init()
+
+    shutdown_event = threading.Event()
+    robot, vr_monitor = None, None
+    vr_connected_time = None
 
     try:
         # Try to use saved calibration file to avoid recalibrating each time
         # You can modify robot_id here to match your robot configuration
-        robot_config = XLerobotConfig()  # Can be modified to your robot ID
+        robot_config = XLerobotConfig(id="joyandai_xlerobot")  # Can be modified to your robot ID
         robot = XLerobot(robot_config)
         
         try:
@@ -489,69 +525,63 @@ def main():
         obs = robot.get_observation()
         kin_left = SO101Kinematics()
         kin_right = SO101Kinematics()
-        left_arm = SimpleTeleopArm(LEFT_JOINT_MAP, obs, kin_left, prefix="left")
+        left_arm = SimpleTeleopArm(LEFT_JOINT_MAP, obs, kin_left, prefix="left") if ENABLE_LEFT_HAND else None
         right_arm = SimpleTeleopArm(RIGHT_JOINT_MAP, obs, kin_right, prefix="right")
-        head_control = SimpleHeadControl(obs)
+        head_control = SimpleHeadControl(obs) if ENABLE_HEAD else None
 
         # Move both arms and head to zero position at start
-        left_arm.move_to_zero_position(robot)
+        if ENABLE_LEFT_HAND and left_arm:
+            left_arm.move_to_zero_position(robot)
         right_arm.move_to_zero_position(robot)
-        head_control.move_to_zero_position(robot)
+        if ENABLE_HEAD and head_control:
+            head_control.move_to_zero_position(robot)
         
         # Main VR control loop
-        print("Starting VR control loop. Press ESC to exit.")
-        try:
-            while True:
-                # Get VR controller data
-                dual_goals = vr_monitor.get_latest_goal_nowait()
-                left_goal = dual_goals.get("left") if dual_goals else None
-                right_goal = dual_goals.get("right") if dual_goals else None
-                headset_goal = dual_goals.get("headset") if dual_goals else None
+        print("Starting VR control loop.")
+       
+        while not shutdown_event.is_set():
+            
+            start_loop_t = time.perf_counter()
 
-                # Wait for VR connection before proceeding
-                if dual_goals is None:
-                    time.sleep(0.01)  # Wait 10ms for VR connection
-                    continue
+            # Get VR controller data
+            dual_goals = vr_monitor.get_latest_goal_nowait()
+            left_goal = dual_goals.get("left") if dual_goals else None
+            right_goal = dual_goals.get("right") if dual_goals else None
+            headset_goal = dual_goals.get("headset") if dual_goals else None
 
-                # Handle VR input for both arms
+            # Handle VR input for both arms
+            if ENABLE_LEFT_HAND and left_arm:
                 left_arm.handle_vr_input(left_goal, gripper_state=None)
-                right_arm.handle_vr_input(right_goal, gripper_state=None)
-                
-                # Get actions from both arms and head
-                left_action = left_arm.p_control_action(robot)
-                right_action = right_arm.p_control_action(robot)
-                head_action = head_control.p_control_action(robot)
+            right_arm.handle_vr_input(right_goal, gripper_state=None)
+            
+            # Get actions from both arms and head
+            left_action, left_obs = left_arm.p_control_action(robot) if (ENABLE_LEFT_HAND and left_arm is not None) else ({}, {})
+            right_action, right_obs = right_arm.p_control_action(robot)
+            head_action = head_control.p_control_action(robot) if (ENABLE_HEAD and head_control) else {}
 
-                # Get base control from VR
-                print(f'right_goal: {right_goal}')
-                base_action = get_vr_base_action(right_goal, robot)
-                # speed_multiplier = get_vr_speed_control(right_goal)
-                
-                # if base_action:
-                #     for key in base_action:
-                #         if 'vel' in key or 'velocity' in key:  
-                            # base_action[key] *= speed_multiplier 
+            # Get base control from VR
+            base_action = get_vr_base_action(right_goal, robot)
+            # speed_multiplier = get_vr_speed_control(right_goal)
+            
+            # if base_action:
+            #     for key in base_action:
+            #         if 'vel' in key or 'velocity' in key:  
+                        # base_action[key] *= speed_multiplier 
 
-                # Merge all actions
-                action = {**left_action, **right_action, **head_action, **base_action}
-                robot.send_action(action)
-                
-                # Handle keyboard exit (press ESC to quit)
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT:
-                        print("Quit event detected, exiting...")
-                        break
-                    elif event.type == pygame.KEYDOWN:
-                        if event.key == pygame.K_ESCAPE:
-                            print("ESC pressed, exiting...")
-                            break
-                else:
-                    continue  # Continue the while loop if no break occurred
-                break  # Break the while loop if a break occurred in the for loop
-                
-        finally:
-            robot.disconnect()
-            print("VR teleoperation ended.")
+            # Merge all actions
+            action = {**left_action, **right_action, **head_action, **base_action}
+            robot.send_action(action)
+            
+            # Get camera frames through async_read
+            camera_obs = robot.get_camera_observation()
+            if (ENABLE_LEFT_HAND and left_arm):
+                action_features = {**left_action, **right_action}
+                obs_features = {**left_obs, **right_obs, **camera_obs}
+            else:
+                action_features = right_action
+                obs_features = { **right_obs, **camera_obs}
+            dt_s = time.perf_counter() - start_loop_t
+            precise_sleep(1 / FPS - dt_s)
         
     except Exception as e:
         print(f"Program execution failed: {e}")
@@ -559,14 +589,11 @@ def main():
         
     finally:
         # Cleanup
-        try:
-            pygame.quit()
-        except:
-            pass
-        try:
+        shutdown_event.set()
+
+   
+        if robot:
             robot.disconnect()
-        except:
-            pass
 
 if __name__ == "__main__":
     main()
