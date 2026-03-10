@@ -39,7 +39,7 @@
 
 ---
 
-# 📰 新闻 
+# 📰 新闻 (最新update请关注英文版)
 - 2025-09-22: **硬件组装教程视频** 发布于 [Youtube](https://www.youtube.com/watch?v=upB1CEFeOlk) 和 [Bilibili](https://www.bilibili.com/video/BV1AGWFzUEJf/). 感谢 WOWROBO 费心制作!
 - 2025-09-09: **面向开发者的组装套件 (不包括电池和宜家推车) 正式上架** [中国 (淘宝) **3699￥**](https://e.tb.cn/h.SZFbBgZABZ8zRPe?tk=ba514rTBRjQ) 和 [全球 **579\$**](https://shop.wowrobo.com/products/xlerobot-dual-arm-mobile-household-robot-kit?variant=47297659961561). _(与**Wowrobo**合作, Huggingface SO101 手臂官方合作商之一, 已在全球范围卖出 5千+ SO101 手臂，用户反馈好)_
   <img width="1482" height="485" alt="image" src="https://github.com/user-attachments/assets/788836c1-966a-4d11-a911-5c37befc0b85" />
@@ -116,7 +116,6 @@
 
 我构建XLeRobot作为个人爱好来实例化我的研究理论，同时也为对机器人和具身AI感兴趣的人提供一个低成本平台。
 
-[![Star History Chart](https://api.star-history.com/svg?repos=Vector-Wangel/XLeRobot&type=Timeline)](https://star-history.com/#Vector-Wangel/XLeRobot&Timeline)
 ---
 
 ## 引用

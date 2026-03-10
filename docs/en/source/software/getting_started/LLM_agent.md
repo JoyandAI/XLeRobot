@@ -5,8 +5,8 @@ Imagine telling the robot "go cleanup my kitchen" and watching it doing so. This
 Demo of agent controlling XLeRobot, that has a task to grab a notebook and give it to human:
 
 <video width="100%" controls>
-  <source src="https://github-production-user-asset-6210df.s3.amazonaws.com/50213363/528949330-faf375cf-d29a-4b1b-b0b1-da474c7006fe.mov?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAVCODYLSA53PQK4ZA%2F20251221%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20251221T111424Z&X-Amz-Expires=300&X-Amz-Signature=3cc0d5a82bf005bb517e77f3fdcd59f906601cb0a8df5158e3e50806067c734a&X-Amz-SignedHeaders=host" type="video/mp4">
-  To be uploaded.
+  <source src="https://vector-wangel.github.io/XLeRobot-assets/videos/Real_demos/agent_in_action.mov" type="video/mp4">
+  Your browser does not support the video tag.
 </video>
 
 ### Getting Started
@@ -197,7 +197,7 @@ agent.go()
 
 Let's go to the most advanced and useful part of our agent - the arms manipulation through VLA policies! That allows the robot to make full range of household tasks - like throwing out a trash or bringing you a tea from kitchen.
 
-First of all, you need to train the policy agent will utilize later. Reference [VLA tutorial](https://xlerobot.readthedocs.io/en/latest/software/getting_started/RL_VLA.html) to learn how to do it.
+First of all, you need to train the policy agent will utilize later. Reference [VLA tutorial](https://xlerobot.readthedocs.io/en/latest/software/getting_started/VLA_ACT.html) to learn how to do it.
 
 Let's assume you trained VLA policy that grabs a notebook from the table and put it in the robot basket (for further transportation). Let's add it as a tool for your agent:
 

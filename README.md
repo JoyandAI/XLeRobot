@@ -40,17 +40,17 @@
 ---
 
 # 📰 News 
+- 2026-1-29: Play with XLeRobot directly in browser with Mujoco and 3DGS: https://vector-wangel.github.io/MuJoCo-GS-Web/
+  - <a href="https://vector-wangel.github.io/MuJoCo-GS-Web/"><img src="https://github.com/user-attachments/assets/9f6faa1c-6f4e-40ea-a28d-795b0f3323d2" href></a>
 - 2025-12-02: [Dual-wheel version released](https://xlerobot.readthedocs.io/en/latest/hardware/getting_started/assemble_2wheel.html)! Have a more stable and accurate differential-wheel base for a cheaper price. (Default servo motor, optional scooter brushless Motor available at a similar price)
   <img width="1368" height="789" alt="image" src="https://github.com/user-attachments/assets/db226bfb-dc20-407b-9854-6a394ccd8fe7" />
 
 - 2025-11-11: **[Temporary VLA tutorial](https://xlerobot.readthedocs.io/en/latest/software/getting_started/RL_VLA.html#vision-language-action-vla-training-for-xlerobot)** out. Official version out soon.
 - 2025-09-22: **Hardware Assembly Video Tutorial** availabe at [Youtube](https://www.youtube.com/watch?v=upB1CEFeOlk) and [Bilibili](https://www.bilibili.com/video/BV1AGWFzUEJf/). Thanks WOWROBO for making this video!
 - 2025-09-09: **Developer Assembly kit (excluding battery and IKEA cart) ready for purchase** in [China (Taobao) for **3699￥**](https://e.tb.cn/h.SZFbBgZABZ8zRPe?tk=ba514rTBRjQ) and [world-wide for **579\$**](https://shop.wowrobo.com/products/xlerobot-dual-arm-mobile-household-robot-kit?variant=47297659961561). _(In collaboration with **Wowrobo**)_
-  <img width="1482" height="485" alt="image" src="https://github.com/user-attachments/assets/788836c1-966a-4d11-a911-5c37befc0b85" />
   - Non-profit, I personally don't earn any from this. I also asked Wowrobo to set the price as low as possible.
   - This is only the assembly kit for developers, please check documentation website and this repo for available codes and tutorials before you purchase.
 - 2025-09-09: Joined [Embodied AI Home Robot Hackathon](https://www.seeedstudio.com/embodied-ai-worldwide-hackathon-home-robot.html) (Oct 25–26, Bay Area) held by **SEEED x Nvidia x Huggingface** as mentor! [Register HERE](https://docs.google.com/forms/d/e/1FAIpQLSdYYDegdgIypxuGJNLcoc8kbdmU4jKgl49zg4X-107LAmBN4g/viewform).
-- <img width="2400" height="1256" alt="image" src="https://github.com/user-attachments/assets/4132c23b-5c86-4bb9-94b4-a6b12059685b" />
 
 - 2025-08-30: XLeRobot 0.3.0 Release with final outfit touch up and household chores showcase demos. 
 
@@ -125,7 +125,6 @@ I am a CS graduate student at Rice University [RobotPi Lab](https://robotpilab.g
 
 I built XLeRobot as a personal hobby to instantiate my research theory, also to provide a low-cost platform for people who are interested in robotics and embodied AI to work with. 
 
-[![Star History Chart](https://api.star-history.com/svg?repos=Vector-Wangel/XLeRobot&type=Timeline)](https://star-history.com/#Vector-Wangel/XLeRobot&Timeline)
 ---
 
 ## Citation
@@ -134,7 +133,7 @@ If you want, you can cite this work with:
 
 ```bibtex
 @misc{wang2025xlerobot,
-    author = {Wang, Gaotian and Lu, Zhuoyi},
+    author = {Wang, Gaotian and Lu, Zhuoyi and Yiyang, Huang and Yihao, Liu},
     title = {XLeRobot: A Practical Low-cost Household Dual-Arm Mobile Robot Design for General Manipulation},
     howpublished = "\url{https://github.com/Vector-Wangel/XLeRobot}",
     year = {2025}

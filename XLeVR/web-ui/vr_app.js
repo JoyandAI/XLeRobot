@@ -568,8 +568,8 @@ AFRAME.registerComponent('controller-updater', {
                 };
                 // 侧边按钮
                 rightController.buttons = {
-                    a: !!rightGamepad.buttons[3]?.pressed,
-                    b: !!rightGamepad.buttons[4]?.pressed,
+                    a: !!rightGamepad.buttons[4]?.pressed,
+                    b: !!rightGamepad.buttons[5]?.pressed,
                     squeeze: !!rightGamepad.buttons[1]?.pressed,
                     thumbstick: !!rightGamepad.buttons[2]?.pressed,
                     menu: !!rightGamepad.buttons[6]?.pressed

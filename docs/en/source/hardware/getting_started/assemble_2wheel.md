@@ -66,6 +66,8 @@ Assembled picture:
 
 Build upon [Bracket Bot](https://www.bracket.bot/).
 
+Find the connector to the IKEA cart [here](https://github.com/Vector-Wangel/XLeRobot/blob/main/hardware/Brushlessmotor%20connector.stl). (M8x20 screws required)
+
 Pros: a fully stable and robust version with great performance.
 
 Cons: more complex wiring.
